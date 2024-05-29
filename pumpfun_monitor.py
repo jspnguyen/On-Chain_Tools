@@ -3,10 +3,14 @@ import requests, time, json
 with open('data/config.json', 'r') as f:
     config = json.load(f)
 
+with open('data/keywords.json', 'r') as f2:
+    keyword_list = json.load(f)
+
 LATEST_TOKEN_REQUESTS_ENDPOINT = config["LATEST_TOKEN_REQUESTS_ENDPOINT"]
 MONITOR_REFRESH_RATE = config["MONITOR_REFRESH_RATE"]
 POSTED_LIST_CAPACITY = config["POSTED_LIST_CAPACITY"]
 WEBHOOK_URL = config["WEBHOOK_URL"]
+KEYWORD_ROLE_ID = config["KEYWORD_ROLE_ID"]
 
 def launch_monitor():
     """
@@ -42,6 +46,10 @@ def launch_monitor():
                         "color": 47360,  
                     }],
                 }
+                
+                if token_name in keyword_list:
+                    mention_data = {'content': f"<@&{KEYWORD_ROLE_ID}>"}
+                    requests.post(WEBHOOK_URL, json=mention_data)
                 
                 requests.post(WEBHOOK_URL, json=webhook_data)
             
