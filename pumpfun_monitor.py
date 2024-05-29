@@ -35,8 +35,8 @@ def launch_monitor():
                     token_symbol = token["symbol"]
                     token_description = token["description"]
                     token_image = token["image_uri"]
-                    token_twitter = token.get("twitter", "No Twitter")
-                    token_telegram = token.get("telegram", "No Telegram")
+                    token_twitter = token.get("twitter", "No Twitter") or "No Twitter"
+                    token_telegram = token.get("telegram", "No Telegram") or "No Telegram"
                     
                     if "https://" not in token_twitter and "No Twitter" not in token_twitter:
                         token_twitter = f"https://{token_twitter}"
