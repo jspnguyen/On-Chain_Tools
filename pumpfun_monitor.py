@@ -26,10 +26,10 @@ def launch_monitor():
         
             for token in latest_tokens_50:
                 
-                token_signature = token["signature"]
+                token_mint = token["mint"]
                 
-                if token_signature not in posted_list:
-                    posted_list.append(token_signature)
+                if token_mint not in posted_list:
+                    posted_list.append(token_mint)
                     
                     token_name = token["name"]
                     token_symbol = token["symbol"]
@@ -41,12 +41,17 @@ def launch_monitor():
                     if not token_twitter:
                         token_twitter = "No Twiter"
                     if not token_telegram:
-                        token_twitter = "No Telegram"
+                        token_telegram = "No Telegram"
+                    
+                    if "https://" not in token_twitter and "No Twitter" not in token_twitter:
+                        token_twitter = f"https://{token_twitter}"
+                    if "https://" not in token_telegram and "No Telegram" not in token_telegram:
+                        token_telegram = f"https://{token_telegram}"
                     
                     webhook_data = {
                         "embeds": [{
                             "title": f"{token_name} ({token_symbol})",
-                            "description": f"**Description: **{token_description}\n\n{token_twitter} | {token_telegram}",
+                            "description": f"**[Buy Now](https://pump.fun/{token_mint}/)**\n\n**Description: **{token_description}\n\n{token_twitter} | {token_telegram}",
                             "color": 47360,  
                             "thumbnail": {
                                 "url": token_image  
