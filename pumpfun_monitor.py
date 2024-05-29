@@ -42,8 +42,9 @@ def launch_monitor():
                 webhook_data = {
                     "embeds": [{
                         "title": f"{token_name} ({token_symbol})",
-                        "description": f"{token_description}\n\n{token_twitter} | {token_telegram}",
+                        "description": f"**Description: **{token_description}\n\n{token_twitter} | {token_telegram}",
                         "color": 47360,  
+                        "thumbnail" : token_image
                     }],
                 }
                 
