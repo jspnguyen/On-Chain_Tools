@@ -19,10 +19,10 @@ def launch_monitor():
     posted_list = []
     
     while True:
-        latest_tokens_50_reponse = requests.get(LATEST_TOKEN_REQUESTS_ENDPOINT)
+        latest_tokens_50_response = requests.get(LATEST_TOKEN_REQUESTS_ENDPOINT)
         
-        if latest_tokens_50_reponse.status_code == 200:
-            latest_tokens_50 = latest_tokens_50_reponse.json()
+        if latest_tokens_50_response.status_code == 200:
+            latest_tokens_50 = latest_tokens_50_response.json()
         
             for token in latest_tokens_50:
                 
@@ -35,13 +35,8 @@ def launch_monitor():
                     token_symbol = token["symbol"]
                     token_description = token["description"]
                     token_image = token["image_uri"]
-                    token_twitter = token["twitter"]
-                    token_telegram = token["telegram"]
-                    
-                    if not token_twitter:
-                        token_twitter = "No Twiter"
-                    if not token_telegram:
-                        token_telegram = "No Telegram"
+                    token_twitter = token.get("twitter", "No Twitter")
+                    token_telegram = token.get("telegram", "No Telegram")
                     
                     if "https://" not in token_twitter and "No Twitter" not in token_twitter:
                         token_twitter = f"https://{token_twitter}"
