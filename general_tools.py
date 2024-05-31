@@ -66,31 +66,31 @@ async def check_wallet(interaction: discord.Interaction, wallet: str):
     response = requests.get(url, headers=headers)
     
     if response.status_code == 200:
-        wallet_data = response.json()
+        response_data = response.json()
         
-        if wallet_data["status"] == "ok":
-            realized_pnl_usd = wallet_data["realized_pnl_usd"]
-            realized_roi_percentage = wallet_data["realized_roi_percentage"]
+        if response_data["status"] == "ok":
+            wallet_data = response_data["data"]
+            
+            realized_pnl_usd = round(wallet_data["realized_pnl_usd"], 2)
+            realized_roi_percentage = round(wallet_data["realized_roi_percentage"], 2)
             tokens_traded = wallet_data["tokens_traded"]
-            unrealized_pnl_usd = wallet_data["unrealized_pnl_usd"]
-            unrealized_roi_percentage = wallet_data["unrealized_roi_percentage"]
-            winrate = wallet_data["winrate"]
-            average_holding_time = wallet_data["average_holding_time"]
-            combined_pnl_usd = wallet_data["combined_pnl_usd"]
-            combined_roi_percentage = wallet_data["combined_roi_percentage"]
+            unrealized_pnl_usd = round(wallet_data["unrealized_pnl_usd"], 2)
+            unrealized_roi_percentage = round(wallet_data["unrealized_roi_percentage"], 2)
+            winrate = round(wallet_data["winrate"], 2)
+            combined_pnl_usd = round(wallet_data["combined_pnl_usd"], 2)
+            combined_roi_percentage = round(wallet_data["combined_roi_percentage"], 2)
             
             embed = discord.Embed(title=f"Report on {wallet}", color=discord.Colour.gold())
-            embed.add_field(name=f"", value=f"")
-            embed.add_field(name=f"", value=f"")
-            embed.add_field(name=f"", value=f"")
-            embed.add_field(name=f"", value=f"")
-            embed.add_field(name=f"", value=f"")
-            embed.add_field(name=f"", value=f"")
-            embed.add_field(name=f"", value=f"")
-            embed.add_field(name=f"", value=f"")
-            embed.add_field(name=f"", value=f"")
+            embed.add_field(name=f"Realized PNL", value=f"${realized_pnl_usd}")
+            embed.add_field(name=f"Realized ROI", value=f"{realized_roi_percentage}%")
+            embed.add_field(name=f"Tokens Traded", value=f"{tokens_traded}")
+            embed.add_field(name=f"Unrealized PNL", value=f"${unrealized_pnl_usd}")
+            embed.add_field(name=f"Unrealized ROI", value=f"{unrealized_roi_percentage}%")
+            embed.add_field(name=f"Win Rate", value=f"{winrate}%")
+            embed.add_field(name=f"Combined PNL", value=f"${combined_pnl_usd}")
+            embed.add_field(name=f"Combined ROI", value=f"{combined_roi_percentage}%")
             
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=False)
 
 @bot.tree.command(name="show_keyword", description="Show currently active keywords")
 async def show_keyword(interaction: discord.Interaction):
