@@ -52,6 +52,11 @@ async def remove_keyword(interaction: discord.Interaction, keyword: str):
     else:
         await interaction.response.send_message(f"The keyword '{keyword}' does not exist in the list.")
 
+@bot.tree.command(name="check_wallet", description="Display important stats for a wallet")
+@app_commands.describe(wallet="Sol or EVM wallet address")
+async def remove_keyword(interaction: discord.Interaction, wallet: str):
+    pass
+
 @bot.tree.command(name="show_keyword", description="Show currently active keywords")
 async def remove_keyword(interaction: discord.Interaction):
     pass
@@ -61,7 +66,8 @@ async def self(interaction: discord.Interaction):
     embed = discord.Embed(title="Commands", description="All bot commands", color=discord.Colour.gold())
     embed.add_field(name=f"/add_keyword", value=f"Add a keyword to monitor for in pump.fun deploys")
     embed.add_field(name=f"/remove_keyword", value=f"Remove a keyword from pump.fun deploy monitoring")
-    embed.add_field(name=f"/show_keywords", value=f"Shows keywords being actively monitored (TO BE IMPLEMENTED)")
+    embed.add_field(name=f"/show_keywords", value=f"Shows keywords being actively monitored")
+    embed.add_field(name=f"/check_wallet", value=f"Shows important stats on a wallet")
     await interaction.response.send_message(embed=embed, ephemeral=True)
 
 if __name__ == '__main__':

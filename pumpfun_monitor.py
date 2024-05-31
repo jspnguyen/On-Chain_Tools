@@ -54,6 +54,7 @@ def launch_monitor():
                         }],
                     }
                     
+                    # TODO: Fix logic
                     if token_name in keyword_list:
                         mention_data = {'content': f"<@&{KEYWORD_ROLE_ID}>"}
                         requests.post(WEBHOOK_URL, json=mention_data)
