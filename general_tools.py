@@ -56,6 +56,9 @@ async def remove_keyword(interaction: discord.Interaction, keyword: str):
 @bot.tree.command(name="check_wallet", description="Display important stats for a wallet")
 @app_commands.describe(wallet="Sol or EVM wallet address")
 async def check_wallet(interaction: discord.Interaction, wallet: str):
+    # TODO: 
+    # Add optional time frame param with 3 choices
+    # Defaults to 30 dys
     url = f"https://feed-api.cielo.finance/api/v1/{wallet}/pnl/total-stats?chains=solana&cex_transfers=false"
 
     headers = {
@@ -80,15 +83,17 @@ async def check_wallet(interaction: discord.Interaction, wallet: str):
             combined_pnl_usd = round(wallet_data["combined_pnl_usd"], 2)
             combined_roi_percentage = round(wallet_data["combined_roi_percentage"], 2)
             
-            embed = discord.Embed(title=f"Report on {wallet}", color=discord.Colour.gold())
+            embed = discord.Embed(title=f"{wallet[:4]}...{wallet[-4:]}", color=discord.Colour.gold())
             embed.add_field(name=f"Realized PNL", value=f"${realized_pnl_usd}")
-            embed.add_field(name=f"Realized ROI", value=f"{realized_roi_percentage}%")
-            embed.add_field(name=f"Tokens Traded", value=f"{tokens_traded}")
             embed.add_field(name=f"Unrealized PNL", value=f"${unrealized_pnl_usd}")
-            embed.add_field(name=f"Unrealized ROI", value=f"{unrealized_roi_percentage}%")
-            embed.add_field(name=f"Win Rate", value=f"{winrate}%")
             embed.add_field(name=f"Combined PNL", value=f"${combined_pnl_usd}")
+            
+            embed.add_field(name=f"Realized ROI", value=f"{realized_roi_percentage}%")
+            embed.add_field(name=f"Unrealized ROI", value=f"{unrealized_roi_percentage}%")
             embed.add_field(name=f"Combined ROI", value=f"{combined_roi_percentage}%")
+            
+            embed.add_field(name=f"Win Rate", value=f"{winrate}%")
+            embed.add_field(name=f"Tokens Traded", value=f"{tokens_traded}")
             
             await interaction.response.send_message(embed=embed, ephemeral=False)
 
