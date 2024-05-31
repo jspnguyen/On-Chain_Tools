@@ -57,8 +57,8 @@ async def remove_keyword(interaction: discord.Interaction, keyword: str):
 @app_commands.describe(wallet="Sol or EVM wallet address")
 async def check_wallet(interaction: discord.Interaction, wallet: str):
     # TODO: 
-    # Add optional time frame param with 3 choices
-    # Defaults to 30 dys
+    # Add optional time frame param with 3 choices: 1d, 7d, 30d
+    # Defaults to 30 days
     url = f"https://feed-api.cielo.finance/api/v1/{wallet}/pnl/total-stats?chains=solana&cex_transfers=false"
 
     headers = {
@@ -97,8 +97,8 @@ async def check_wallet(interaction: discord.Interaction, wallet: str):
             
             await interaction.response.send_message(embed=embed, ephemeral=False)
 
-@bot.tree.command(name="show_keyword", description="Show currently active keywords")
-async def show_keyword(interaction: discord.Interaction):
+@bot.tree.command(name="show_keywords", description="Show currently active keywords")
+async def show_keywords(interaction: discord.Interaction):
     pass
 
 @bot.tree.command(name="help", description="Shows commands for the bot") 
