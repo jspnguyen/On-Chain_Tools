@@ -54,12 +54,14 @@ async def remove_keyword(interaction: discord.Interaction, keyword: str):
         await interaction.response.send_message(f"The keyword '{keyword}' does not exist in the list.")
 
 @bot.tree.command(name="check_wallet", description="Display important stats for a wallet")
-@app_commands.describe(wallet="Sol or EVM wallet address")
-async def check_wallet(interaction: discord.Interaction, wallet: str):
-    # TODO: 
-    # Add optional time frame param with 3 choices: 1d, 7d, 30d
-    # Defaults to 30 days
-    url = f"https://feed-api.cielo.finance/api/v1/{wallet}/pnl/total-stats?chains=solana&cex_transfers=false"
+@app_commands.describe(wallet="Sol or EVM wallet address", timeframe="Time frame to check the wallet stats")
+@app_commands.choices(timeframe=[
+    app_commands.Choice(name="1 day", value="1d"),
+    app_commands.Choice(name="7 days", value="7d"),
+    app_commands.Choice(name="30 days", value="30d")
+])
+async def check_wallet(interaction: discord.Interaction, wallet: str, timeframe: str = "30d"):
+    url = f"https://feed-api.cielo.finance/api/v1/{wallet}/pnl/total-stats?chains=solana&timeframe={timeframe}&cex_transfers=false"
 
     headers = {
         "accept": "application/json",
@@ -99,15 +101,24 @@ async def check_wallet(interaction: discord.Interaction, wallet: str):
 
 @bot.tree.command(name="show_keywords", description="Show currently active keywords")
 async def show_keywords(interaction: discord.Interaction):
-    pass
+    with open('data/keywords.json', 'r') as f:
+        keyword_list = json.load(f)
+    
+    if keyword_list:
+        keywords = "\n".join(keyword_list.keys())
+        await interaction.response.send_message(f"Active keywords:\n{keywords}")
+    else:
+        await interaction.response.send_message("No active keywords.")
 
 @bot.tree.command(name="help", description="Shows commands for the bot") 
-async def self(interaction: discord.Interaction):
+async def help(interaction: discord.Interaction):
     embed = discord.Embed(title="Commands", description="All bot commands", color=discord.Colour.gold())
     embed.add_field(name=f"/add_keyword", value=f"Add a keyword to monitor for in pump.fun deploys")
     embed.add_field(name=f"/remove_keyword", value=f"Remove a keyword from pump.fun deploy monitoring")
     embed.add_field(name=f"/show_keywords", value=f"Shows keywords being actively monitored")
     embed.add_field(name=f"/check_wallet", value=f"Shows important stats on a wallet")
+    embed.add_field(name=f"/add_success_wallet", value=f"Add a wallet for success bot")
+    embed.add_field(name=f"/success_post", value=f"Shows profit stats on a token for your wallet")
     await interaction.response.send_message(embed=embed, ephemeral=True)
 
 if __name__ == '__main__':
