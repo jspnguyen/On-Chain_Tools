@@ -1,5 +1,6 @@
-import discord, json, requests, os, re, aiohttp
+import discord, json, requests, os, re, aiohttp, asyncio
 from discord import app_commands
+from playwright.async_api import async_playwright
 
 with open('data/config.json', 'r') as f:
     config = json.load(f)
@@ -168,6 +169,29 @@ async def show_keywords(interaction: discord.Interaction):
         await interaction.response.send_message(f"Active keywords:\n{keywords}")
     else:
         await interaction.response.send_message("No active keywords.")
+
+@bot.tree.command(name="bubblemap", description="Get the bubblemap for a token")
+@app_commands.describe(token_address="Address for the coin you want to check")
+async def bubblemap(interaction: discord.Interaction, token_address: str):
+    await interaction.response.defer()  
+    
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=True)
+        page = await browser.new_page()
+        await page.goto(f"https://app.bubblemaps.io/sol/token/{token_address}?pumpfun=true&hide_context")
+
+        await asyncio.sleep(15)
+        await page.evaluate('''() => {
+            const dialog = document.querySelector('.mdc-dialog.mdc-dialog--open');
+            if (dialog) {
+                dialog.style.display = 'none';
+            }
+        }''')
+        screenshot_path = "bubblemap.png"
+        await page.screenshot(path=screenshot_path, full_page=True)
+        await browser.close()
+
+    await interaction.followup.send(file=discord.File(screenshot_path))
 
 @bot.tree.command(name="help", description="Shows commands for the bot") 
 async def help(interaction: discord.Interaction):
