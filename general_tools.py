@@ -214,42 +214,21 @@ async def chart(interaction: discord.Interaction, token_address: str):
     await interaction.response.defer()  
     
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
+        browser = await p.chromium.launch(headless=False)
         page = await browser.new_page()
-        await page.goto(f"https://gmgn.ai/sol/token/{token_address}")
+        await page.goto(f"https://dexscreener.com/solana/{token_address}?embed=1&theme=dark")
 
         await asyncio.sleep(4)
         
-        await page.evaluate('''() => {
-            const element = document.querySelector('.chakra-modal__overlay.css-hdd9l7');
-            if (element) {
-                element.style.display = 'none';
-            }
-        }''')
-        
-        await page.evaluate('''() => {
-            const element = document.querySelector('.chakra-modal__content-container.css-1vzvhb0');
-            if (element) {
-                element.style.display = 'none';
-            }
-        }''')
-        
-        await page.evaluate('''() => {
-            const element = document.querySelector('a.css-kzwu7k');
-            if (element) {
-                element.style.display = 'none';
-            }
-        }''')
-        
-        screenshot_path = "gmchart.png"
+        screenshot_path = "dexchart.png"
         
         await page.screenshot(path=screenshot_path, full_page=False)
         await browser.close()
 
-    # image = Image.open(screenshot_path)
-    # width, height = image.size
-    # cropped_image = image.crop((0, 65, width, height - 49))
-    # cropped_image.save(screenshot_path)
+    image = Image.open(screenshot_path)
+    width, height = image.size
+    cropped_image = image.crop((55, 41, width - 334, height - 291))
+    cropped_image.save(screenshot_path)
 
     await interaction.followup.send(file=discord.File(screenshot_path))
 
