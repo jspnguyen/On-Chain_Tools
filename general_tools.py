@@ -210,6 +210,7 @@ async def help(interaction: discord.Interaction):
     embed.add_field(name=f"/check_wallet", value=f"Shows important stats on a wallet")
     embed.add_field(name=f"/add_success_wallet", value=f"Add a wallet for success bot")
     embed.add_field(name=f"/success_post", value=f"Shows profit stats on a token for your wallet")
+    embed.add_field(name=f"/bubblemap", value=f"Generate a bubblemap for a token")
     await interaction.response.send_message(embed=embed, ephemeral=True)
 
 if __name__ == '__main__':
