@@ -181,11 +181,18 @@ async def bubblemap(interaction: discord.Interaction, token_address: str):
         page = await browser.new_page()
         await page.goto(f"https://app.bubblemaps.io/sol/token/{token_address}?pumpfun=true&hide_context")
 
-        await asyncio.sleep(4)
+        await asyncio.sleep(5)
         await page.evaluate('''() => {
             const dialog = document.querySelector('.mdc-dialog.mdc-dialog--open');
             if (dialog) {
                 dialog.style.display = 'none';
+            }
+        }''')
+        
+        await page.evaluate('''() => {
+            const element = document.querySelector('.not-listed-warning');
+            if (element) {
+                element.style.display = 'none';
             }
         }''')
         
@@ -196,8 +203,53 @@ async def bubblemap(interaction: discord.Interaction, token_address: str):
 
     image = Image.open(screenshot_path)
     width, height = image.size
-    cropped_image = image.crop((0, 65, width, height - 49))
+    cropped_image = image.crop((0, 65, width, height))
     cropped_image.save(screenshot_path)
+
+    await interaction.followup.send(file=discord.File(screenshot_path))
+
+@bot.tree.command(name="chart", description="Get the 1 hour chart for a token")
+@app_commands.describe(token_address="Address for the coin you want to check")
+async def chart(interaction: discord.Interaction, token_address: str):
+    await interaction.response.defer()  
+    
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=True)
+        page = await browser.new_page()
+        await page.goto(f"https://gmgn.ai/sol/token/{token_address}")
+
+        await asyncio.sleep(4)
+        
+        await page.evaluate('''() => {
+            const element = document.querySelector('.chakra-modal__overlay.css-hdd9l7');
+            if (element) {
+                element.style.display = 'none';
+            }
+        }''')
+        
+        await page.evaluate('''() => {
+            const element = document.querySelector('.chakra-modal__content-container.css-1vzvhb0');
+            if (element) {
+                element.style.display = 'none';
+            }
+        }''')
+        
+        await page.evaluate('''() => {
+            const element = document.querySelector('a.css-kzwu7k');
+            if (element) {
+                element.style.display = 'none';
+            }
+        }''')
+        
+        screenshot_path = "gmchart.png"
+        
+        await page.screenshot(path=screenshot_path, full_page=False)
+        await browser.close()
+
+    # image = Image.open(screenshot_path)
+    # width, height = image.size
+    # cropped_image = image.crop((0, 65, width, height - 49))
+    # cropped_image.save(screenshot_path)
 
     await interaction.followup.send(file=discord.File(screenshot_path))
 
@@ -211,6 +263,7 @@ async def help(interaction: discord.Interaction):
     embed.add_field(name=f"/add_success_wallet", value=f"Add a wallet for success bot")
     embed.add_field(name=f"/success_post", value=f"Shows profit stats on a token for your wallet")
     embed.add_field(name=f"/bubblemap", value=f"Generate a bubblemap for a token")
+    embed.add_field(name=f"/chart", value=f"Generate a chart for a token")
     await interaction.response.send_message(embed=embed, ephemeral=True)
 
 if __name__ == '__main__':
