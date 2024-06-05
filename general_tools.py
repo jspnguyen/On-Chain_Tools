@@ -1,6 +1,7 @@
 import discord, json, requests, os, re, aiohttp, asyncio
 from discord import app_commands
 from playwright.async_api import async_playwright
+from PIL import Image
 
 with open('data/config.json', 'r') as f:
     config = json.load(f)
@@ -180,16 +181,23 @@ async def bubblemap(interaction: discord.Interaction, token_address: str):
         page = await browser.new_page()
         await page.goto(f"https://app.bubblemaps.io/sol/token/{token_address}?pumpfun=true&hide_context")
 
-        await asyncio.sleep(15)
+        await asyncio.sleep(4)
         await page.evaluate('''() => {
             const dialog = document.querySelector('.mdc-dialog.mdc-dialog--open');
             if (dialog) {
                 dialog.style.display = 'none';
             }
         }''')
+        
         screenshot_path = "bubblemap.png"
+        
         await page.screenshot(path=screenshot_path, full_page=True)
         await browser.close()
+
+    image = Image.open(screenshot_path)
+    width, height = image.size
+    cropped_image = image.crop((0, 65, width, height - 49))
+    cropped_image.save(screenshot_path)
 
     await interaction.followup.send(file=discord.File(screenshot_path))
 
