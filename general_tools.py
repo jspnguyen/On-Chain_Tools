@@ -24,7 +24,7 @@ class PreBot(discord.Client):
 bot = PreBot()
 
 def find_solscan_links(text):
-    pattern = r'href="(https?://[^\s"]*solscan\.io[^\s"]*)"'
+    pattern = r'href="(https://solscan\.io/account/[^\s"]*)"'
     matches = re.findall(pattern, text)
     return matches
 
@@ -120,45 +120,41 @@ async def check_token_wallets(interaction: discord.Interaction, token_address: s
         await page.click('button.chakra-button.custom-1tgk3lm')
         await asyncio.sleep(4)
         
-        content = await page.query_selector('.custom-17mi4hx').inner_html()
+        content = await page.content()
 
         await browser.close()
     
-    # links = find_solscan_links(content)
-    # cleaned_links = [link.replace('https://solscan.io/account/', '') for link in links]
+    links = find_solscan_links(content)
+    cleaned_links = [link.replace('https://solscan.io/account/', '') for link in links]
+    cleaned_links = cleaned_links[7:]
+    cleaned_links = cleaned_links[:25] # ! TEMP ONLY TOP 25
     
-    # cleaned_links = cleaned_links[:25] # ! TEMP
+    smart_wallets = []
     
-    # smart_wallets = []
-    
-    # async with aiohttp.ClientSession() as session:
-    #     for wallet in cleaned_links:
-    #         url = f"https://feed-api.cielo.finance/api/v1/{wallet}/pnl/total-stats?chains=solana&timeframe=30d&cex_transfers=false"
-    #         headers = {
-    #             "accept": "application/json",
-    #             "X-API-KEY": CIELO_API_KEY
-    #         }
+    async with aiohttp.ClientSession() as session:
+        for wallet in cleaned_links:
+            url = f"https://feed-api.cielo.finance/api/v1/{wallet}/pnl/total-stats?chains=solana&timeframe=30d&cex_transfers=false"
+            headers = {
+                "accept": "application/json",
+                "X-API-KEY": CIELO_API_KEY
+            }
 
-    #         async with session.get(url, headers=headers) as response:
-    #             if response.status == 200:
-    #                 response_data = await response.json()
+            async with session.get(url, headers=headers) as response:
+                if response.status == 200:
+                    response_data = await response.json()
                     
-    #                 if response_data["status"] == "ok":
-    #                     wallet_data = response_data["data"]
+                    if response_data["status"] == "ok":
+                        wallet_data = response_data["data"]
                         
-    #                     tokens_traded = wallet_data["tokens_traded"]
-    #                     winrate = wallet_data["winrate"]
+                        tokens_traded = wallet_data["tokens_traded"]
+                        winrate = wallet_data["winrate"]
                         
-    #                     if tokens_traded >= 20 and winrate >= 60:
-    #                         smart_wallets.append(f"{wallet} {tokens_traded} {winrate}")
+                        if tokens_traded >= 20 and winrate >= 60:
+                            smart_wallets.append(f"{wallet} {tokens_traded} {round(winrate, 2)}")
     
-    # # TODO: Improve formatting
-    # embed = discord.Embed(title=f"Potential Smart Wallets for TICKER", description="\n".join(smart_wallets), color=discord.Colour.gold())
-    # await interaction.followup.send(embed=embed)
-    
-    solscan_count = content.count("solscan.io")
-
-    await interaction.followup.send(f"The term 'solscan.io' was found {solscan_count} times in the content.")
+    # TODO: Improve formatting
+    embed = discord.Embed(title=f"Potential Smart Wallets", description="\n".join(smart_wallets), color=discord.Colour.gold())
+    await interaction.followup.send(embed=embed)
 
 @bot.tree.command(name="show_keywords", description="Show currently active keywords")
 async def show_keywords(interaction: discord.Interaction):
