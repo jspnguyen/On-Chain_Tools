@@ -1,4 +1,4 @@
-import discord, json, requests, os, re, aiohttp, asyncio
+import discord, json, requests, re, aiohttp, asyncio
 from discord import app_commands
 from playwright.async_api import async_playwright
 from PIL import Image
@@ -149,7 +149,7 @@ async def check_token_wallets(interaction: discord.Interaction, token_address: s
                         tokens_traded = wallet_data["tokens_traded"]
                         winrate = wallet_data["winrate"]
                         
-                        if tokens_traded >= 20 and winrate >= 60:
+                        if tokens_traded >= 10 and winrate >= 60:
                             smart_wallets.append(f"{wallet} {tokens_traded} {round(winrate, 2)}")
     
     # TODO: Improve formatting
