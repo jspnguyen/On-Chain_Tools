@@ -178,7 +178,7 @@ async def bubblemap(interaction: discord.Interaction, token_address: str):
         page = await browser.new_page()
         await page.goto(bubblemap_link)
 
-        await asyncio.sleep(5)
+        await asyncio.sleep(6)
         await page.evaluate('''() => {
             const dialog = document.querySelector('.mdc-dialog.mdc-dialog--open');
             if (dialog) {
@@ -193,7 +193,7 @@ async def bubblemap(interaction: discord.Interaction, token_address: str):
             }
         }''')
         
-        screenshot_path = "bubblemap.png"
+        screenshot_path = "data/bubblemap.png"
         
         await page.screenshot(path=screenshot_path, full_page=True)
         await browser.close()
@@ -217,7 +217,7 @@ async def chart(interaction: discord.Interaction, token_address: str):
 
         await asyncio.sleep(4)
         
-        screenshot_path = "dexchart.png"
+        screenshot_path = "data/dexchart.png"
         
         await page.screenshot(path=screenshot_path, full_page=False)
         await browser.close()
