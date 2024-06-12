@@ -171,11 +171,12 @@ async def show_keywords(interaction: discord.Interaction):
 @app_commands.describe(token_address="Address for the coin you want to check")
 async def bubblemap(interaction: discord.Interaction, token_address: str):
     await interaction.response.defer()  
+    bubblemap_link = f"https://app.bubblemaps.io/sol/token/{token_address}?pumpfun=true&hide_context"
     
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
         page = await browser.new_page()
-        await page.goto(f"https://app.bubblemaps.io/sol/token/{token_address}?pumpfun=true&hide_context")
+        await page.goto(bubblemap_link)
 
         await asyncio.sleep(5)
         await page.evaluate('''() => {
@@ -202,7 +203,7 @@ async def bubblemap(interaction: discord.Interaction, token_address: str):
     cropped_image = image.crop((0, 65, width, height))
     cropped_image.save(screenshot_path)
 
-    await interaction.followup.send(file=discord.File(screenshot_path))
+    await interaction.followup.send(content=f"[Link](<{bubblemap_link}>)", file=discord.File(screenshot_path))
 
 @bot.tree.command(name="chart", description="Get the 1 hour chart for a token")
 @app_commands.describe(token_address="Address for the coin you want to check")
