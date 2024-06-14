@@ -65,10 +65,11 @@ async def subscribe():
                             }],
                         }
                         
-                        # # TODO: 
-                        # if token_name in keyword_list:
-                        #     mention_data = {'content': f"<@&{KEYWORD_ROLE_ID}>"}
-                        #     await post_to_webhook(session, WEBHOOK_URL, mention_data)
+                        for keyword in keyword_list:
+                            if keyword in token_name:
+                                mention_data = {'content': f"<@&{KEYWORD_ROLE_ID}>"}
+                                await post_to_webhook(session, WEBHOOK_URL, mention_data)
+                                break
                         
                         await post_to_webhook(session, WEBHOOK_URL, webhook_data)
 
