@@ -1,4 +1,4 @@
-import discord, json, requests, aiohttp
+import discord, json, aiohttp
 from discord import app_commands
 
 with open('data/config.json', 'r') as f:

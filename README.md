@@ -8,4 +8,4 @@ Some quick tools I made to help assist trading coins on Solana.
 
 2. ```playwright install```
 
-3.
+3. Run the tools you would like to use.
