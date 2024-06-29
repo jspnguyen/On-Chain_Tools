@@ -103,6 +103,7 @@ async def check_wallet(interaction: discord.Interaction, wallet: str, timeframe:
             
             embed.add_field(name=f"Win Rate", value=f"{winrate}%")
             embed.add_field(name=f"Tokens Traded", value=f"{tokens_traded}")
+            embed.add_field(name=f"Profile", value=f"[Link](https://app.cielo.finance/profile/{wallet})")
             
             await interaction.response.send_message(embed=embed, ephemeral=False)
 
