@@ -23,14 +23,31 @@ class PreBot(discord.Client):
 
 bot = PreBot()
 
-def find_solscan_links(text):
+# TODO: Check if this is right
+def find_solscan_links(text: str) -> list:
+    """
+    Finds all solscan.io links and returns them as a list
+    """
     pattern = r'href="(https://solscan\.io/account/[^\s"]*)"'
     matches = re.findall(pattern, text)
     return matches
 
+def clean_solscan_links(links: list) -> list:
+    """
+    Removes the unneeded parts of scraped data and return only the top 35 results.
+    """
+    [link.replace('https://solscan.io/account/', '') for link in links]
+    cleaned_links = cleaned_links[7:]
+    cleaned_links = cleaned_links[:35] 
+    
+    return cleaned_links
+
 @bot.tree.command(name="add_keyword", description="Add a keyword to the pump.fun monitor list")
 @app_commands.describe(keyword="Coin name keyword you want to look for")
 async def add_keyword(interaction: discord.Interaction, keyword: str):
+    """
+    Add a keyword to the database, the pump.fun monitor will now consider it whenever posting a new deployment.
+    """
     with open('data/keywords.json', 'r') as f:
         keyword_list = json.load(f)
     
@@ -47,6 +64,9 @@ async def add_keyword(interaction: discord.Interaction, keyword: str):
 @bot.tree.command(name="remove_keyword", description="Remove a keyword from the pump.fun monitor list")
 @app_commands.describe(keyword="Coin name keyword you want to remove")
 async def remove_keyword(interaction: discord.Interaction, keyword: str):
+    """
+    Remove a keyword from the database, the pump.fun monitor will no longer consider this word whenever posting a new deployment.
+    """
     with open('data/keywords.json', 'r') as f:
         keyword_list = json.load(f)
     
@@ -68,6 +88,10 @@ async def remove_keyword(interaction: discord.Interaction, keyword: str):
     app_commands.Choice(name="30 days", value="30d")
 ])
 async def check_wallet(interaction: discord.Interaction, wallet: str, timeframe: str = "30d"):
+    """
+    Retrieves and posts important stats on the trade performance of a wallet.
+    """
+    # TODO:Remove chains=solana?
     url = f"https://feed-api.cielo.finance/api/v1/{wallet}/pnl/total-stats?chains=solana&timeframe={timeframe}&cex_transfers=false"
 
     headers = {
@@ -110,6 +134,9 @@ async def check_wallet(interaction: discord.Interaction, wallet: str, timeframe:
 @bot.tree.command(name="check_token_wallets", description="Check token wallets from a txt file")
 @app_commands.describe(token_address="Token address for a specified coin you want to check top traders for")
 async def check_token_wallets(interaction: discord.Interaction, token_address: str):
+    """
+    Gets the top holders of a tokens and filter them, posting only wallets that have good performance.
+    """
     await interaction.response.defer()  
     
     async with async_playwright() as p:
@@ -126,9 +153,7 @@ async def check_token_wallets(interaction: discord.Interaction, token_address: s
         await browser.close()
     
     links = find_solscan_links(content)
-    cleaned_links = [link.replace('https://solscan.io/account/', '') for link in links]
-    cleaned_links = cleaned_links[7:]
-    cleaned_links = cleaned_links[:25] # ! TEMP ONLY TOP 25
+    cleaned_links = clean_solscan_links(links)
     
     smart_wallets = []
     
@@ -150,7 +175,7 @@ async def check_token_wallets(interaction: discord.Interaction, token_address: s
                         tokens_traded = wallet_data["tokens_traded"]
                         winrate = wallet_data["winrate"]
                         
-                        if tokens_traded >= 10 and winrate >= 60:
+                        if tokens_traded >= 10 and winrate >= 40:
                             smart_wallets.append(f"{wallet} {tokens_traded} {round(winrate, 2)}")
     
     # TODO: Improve formatting
@@ -159,6 +184,9 @@ async def check_token_wallets(interaction: discord.Interaction, token_address: s
 
 @bot.tree.command(name="show_keywords", description="Show currently active keywords")
 async def show_keywords(interaction: discord.Interaction):
+    """
+    Display the keywords that are currently being used for the pump.fun monitor.
+    """
     with open('data/keywords.json', 'r') as f:
         keyword_list = json.load(f)
     
@@ -171,6 +199,10 @@ async def show_keywords(interaction: discord.Interaction):
 @bot.tree.command(name="bubblemap", description="Get the bubblemap for a token")
 @app_commands.describe(token_address="Address for the coin you want to check")
 async def bubblemap(interaction: discord.Interaction, token_address: str):
+    """
+    Retrieves and displays the bubblemap for specified token.
+    """
+    # TODO: Make the command word for all bubblemaps and not just pump.fun
     await interaction.response.defer()  
     bubblemap_link = f"https://app.bubblemaps.io/sol/token/{token_address}?pumpfun=true&hide_context"
     
@@ -209,6 +241,9 @@ async def bubblemap(interaction: discord.Interaction, token_address: str):
 @bot.tree.command(name="chart", description="Get the 1 hour chart for a token")
 @app_commands.describe(token_address="Address for the coin you want to check")
 async def chart(interaction: discord.Interaction, token_address: str):
+    """
+    Display the 15 minute Dexscreener chart for a specified token.
+    """
     await interaction.response.defer()  
     
     async with async_playwright() as p:
@@ -231,17 +266,28 @@ async def chart(interaction: discord.Interaction, token_address: str):
     await interaction.followup.send(file=discord.File(screenshot_path))
 
 @bot.tree.command(name="help", description="Shows commands for the bot") 
-async def help(interaction: discord.Interaction):
-    embed = discord.Embed(title="Commands", description="All bot commands", color=discord.Colour.gold())
-    embed.add_field(name=f"/add_keyword", value=f"Add a keyword to monitor for in pump.fun deploys")
-    embed.add_field(name=f"/remove_keyword", value=f"Remove a keyword from pump.fun deploy monitoring")
-    embed.add_field(name=f"/show_keywords", value=f"Shows keywords being actively monitored")
-    embed.add_field(name=f"/check_wallet", value=f"Shows important stats on a wallet")
-    embed.add_field(name=f"/add_success_wallet", value=f"Add a wallet for success bot")
-    embed.add_field(name=f"/success_post", value=f"Shows profit stats on a token for your wallet")
-    embed.add_field(name=f"/bubblemap", value=f"Generate a bubblemap for a token")
-    embed.add_field(name=f"/chart", value=f"Generate a chart for a token")
-    await interaction.response.send_message(embed=embed, ephemeral=True)
+async def help(interaction: discord.Interaction, command: str = "all"):
+    """
+    Display all available commands for the bot.
+    """
+    commands = ["add_keyword", "remove_keyword", "show_keywords", "check_wallet", "check_token_wallets", "bubblemap", "chart"]
+    
+    if command == "all":
+        embed = discord.Embed(title="Commands", description="Guide to all bot commands", color=discord.Colour.gold())
+        embed.add_field(name=f"/add_keyword", value=f"Add a keyword to monitor for in pump.fun deploys")
+        embed.add_field(name=f"/remove_keyword", value=f"Remove a keyword from pump.fun deploy monitoring")
+        embed.add_field(name=f"/show_keywords", value=f"Shows keywords being actively monitored")
+        embed.add_field(name=f"/check_wallet", value=f"Shows important stats on a wallet")
+        embed.add_field(name=f"/check_token_wallets", value=f"Check top wallets on a certain token for smart wallets")
+        # embed.add_field(name=f"/success_post", value=f"Shows profit stats on a token for your wallet")
+        embed.add_field(name=f"/bubblemap", value=f"Generate a bubblemap for a token")
+        embed.add_field(name=f"/chart", value=f"Generate a chart for a token")
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+    elif command.lower() in commands:
+        # TODO: Finish this up
+        await interaction.response.send_message(f"WIP")
+    else:
+        await interaction.response.send_message(f"Invalid command option.")
 
 if __name__ == '__main__':
     bot.run(DISCORD_BOT_TOKEN)
