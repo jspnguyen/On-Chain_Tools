@@ -324,7 +324,7 @@ async def check_holders(interaction: discord.Interaction, token_address: str):
 @bot.tree.command(name="notable_holders", description="Check top 20 notable holders")
 @app_commands.describe(token_address="Address for the coin you want to check")
 async def notable_holders(interaction: discord.Interaction, token_address: str):
-    WHITELIST = ["michi", "usdc", "mew", "aura", "soy", "mongy", "$wif", "selfie", "mumu", "brainlet", "mini", "lockin"]
+    WHITELIST = ["michi", "usdc", "mew", "aura", "soy", "mongy", "$wif", "selfie", "mumu", "brainlet", "mini", "lockin", "popcat", "bome", "billy", "maneki", "harambe", "retardio", "scf", "wolf", "rocky"]
     THRESHOLD_LIMIT = 20000
     top_holders = f"https://api.rugcheck.xyz/v1/tokens/{token_address}/report"
     return_string = ""
@@ -334,6 +334,7 @@ async def notable_holders(interaction: discord.Interaction, token_address: str):
 
     response = requests.get(top_holders)
     top_holders = response.json()["topHolders"][1:]
+    ticker = response.json()['fileMeta']['symbol']
 
     wallet_rank = 1
     for holder in top_holders:
@@ -349,7 +350,7 @@ async def notable_holders(interaction: discord.Interaction, token_address: str):
             params=params,
         )
         
-        print_string = f"Top Wallet #{wallet_rank}: "
+        print_string = f"**Top Wallet #{wallet_rank}:**"
         print_status = False
 
         for holding in holdings:
@@ -366,20 +367,20 @@ async def notable_holders(interaction: discord.Interaction, token_address: str):
                         
                         holding_value = holding_amount * price
                         if holding_value >= THRESHOLD_LIMIT:
-                            print_string += f"${holding_value:,.2f} of {holding_ticker} "
+                            print_string += f" ${holding_value:,.2f} of {holding_ticker},"
                             print_status = True
                     except:
                         pass
                 else:
                     if holding_amount >= THRESHOLD_LIMIT:
-                        print_string += f"${holding_amount:,.2f} of {holding_ticker} "
+                        print_string += f" ${holding_amount:,.2f} of {holding_ticker},"
                         print_status = True
 
         if print_status:
-            return_string += f"{print_string}\n"
+            return_string += f"{print_string[:-1]}\n"
         
         wallet_rank += 1
-    embed = discord.Embed(title=f"Notable Holders", description=return_string, color=discord.Colour.gold())
+    embed = discord.Embed(title=f"Notable Holders for {ticker}", description=return_string, color=discord.Colour.gold())
     await interaction.followup.send(embed=embed)
 
 @bot.tree.command(name="help", description="Shows commands for the bot") 
