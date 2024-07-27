@@ -2,12 +2,15 @@ import discord, json, requests, re, aiohttp, asyncio
 from discord import app_commands
 from playwright.async_api import async_playwright
 from PIL import Image
+from moralis import sol_api
+from dexscreener import DexscreenerClient
 
 with open('data/config.json', 'r') as f:
     config = json.load(f)
 
 DISCORD_BOT_TOKEN = config["DISCORD_BOT_TOKEN"]
 CIELO_API_KEY = config["CIELO_API_KEY"]
+MORALIS_API_KEY = config["MORALIS_API_KEY"]
 
 class PreBot(discord.Client):
     def __init__(self, *args, **kwargs):
@@ -23,7 +26,6 @@ class PreBot(discord.Client):
 
 bot = PreBot()
 
-# TODO: Check if this is right
 def find_solscan_links(text: str) -> list:
     """
     Finds all solscan.io links and returns them as a list
@@ -264,6 +266,121 @@ async def chart(interaction: discord.Interaction, token_address: str):
     cropped_image.save(screenshot_path)
 
     await interaction.followup.send(file=discord.File(screenshot_path))
+
+@bot.tree.command(name="check_holders", description="Check top 20 holder stats")
+@app_commands.describe(token_address="Address for the coin you want to check")
+async def check_holders(interaction: discord.Interaction, token_address: str):
+    url = f"https://api.rugcheck.xyz/v1/tokens/{token_address}/report"
+    await interaction.response.defer()  
+    
+    response = requests.get(url)
+    
+    if response.status_code == 200:
+        response_data = response.json()
+        ticker = response_data['fileMeta']['symbol']
+        top_holder_list = response_data["topHolders"]
+        
+        fresh_wallets = 0
+        less_than_30 = 0
+        less_than_50 = 0
+        less_than_70 = 0
+        greater_than_70 = 0
+        
+        for holder in top_holder_list:
+            holder_address = holder['owner']
+            
+            url = f"https://feed-api.cielo.finance/api/v1/{holder_address}/pnl/total-stats?chains=solana&timeframe=30d&cex_transfers=false"
+
+            headers = {
+                "accept": "application/json",
+                "X-API-KEY": CIELO_API_KEY
+            }
+
+            response = requests.get(url, headers=headers)
+            
+            if response.status_code == 200:
+                response_data = response.json()
+                
+                if response_data["status"] == "ok":
+                    wallet_data = response_data["data"]
+                    
+                    tokens_traded = wallet_data["tokens_traded"]
+                    winrate = round(wallet_data["winrate"], 2)
+                    
+                    if tokens_traded > 0:
+                        if winrate < 30:
+                            less_than_30 += 1
+                        elif winrate < 50:
+                            less_than_50 += 1
+                        elif winrate < 70:
+                            less_than_70 += 1
+                        else:
+                            greater_than_70 += 1
+                    else:
+                        fresh_wallets += 1
+        embed = discord.Embed(title=f"Top Wallet Report for ${ticker}", description=f"Fresh Wallets: {fresh_wallets}\n0-30% winrate: {less_than_30}\n30-50% winrate: {less_than_50}\n50-70% winrate: {less_than_70}\n>70% winrate: {greater_than_70}", color=discord.Colour.gold())
+        await interaction.followup.send(embed=embed)
+
+@bot.tree.command(name="notable_holders", description="Check top 20 notable holders")
+@app_commands.describe(token_address="Address for the coin you want to check")
+async def notable_holders(interaction: discord.Interaction, token_address: str):
+    WHITELIST = ["michi", "usdc", "mew", "aura", "soy", "mongy", "$wif", "selfie", "mumu", "brainlet", "mini", "lockin"]
+    THRESHOLD_LIMIT = 20000
+    top_holders = f"https://api.rugcheck.xyz/v1/tokens/{token_address}/report"
+    return_string = ""
+    
+    await interaction.response.defer()  
+    client = DexscreenerClient()
+
+    response = requests.get(top_holders)
+    top_holders = response.json()["topHolders"][1:]
+
+    wallet_rank = 1
+    for holder in top_holders:
+        holder_address = holder["owner"]
+        
+        params = {
+        "network": "mainnet",
+        "address": holder_address
+        }   
+
+        holdings = sol_api.account.get_spl(
+            api_key=MORALIS_API_KEY,
+            params=params,
+        )
+        
+        print_string = f"Top Wallet #{wallet_rank}: "
+        print_status = False
+
+        for holding in holdings:
+            holding_ticker = holding['symbol'].lower()
+            
+            if holding_ticker in WHITELIST:
+                holding_amount = float(holding['amount'])
+                holding_token_address = holding['mint']
+
+                if holding_ticker != "usdc":
+                    try:
+                        pairs = client.get_token_pairs(holding_token_address)
+                        price = pairs[0].price_usd
+                        
+                        holding_value = holding_amount * price
+                        if holding_value >= THRESHOLD_LIMIT:
+                            print_string += f"${holding_value:,.2f} of {holding_ticker} "
+                            print_status = True
+                    except:
+                        pass
+                else:
+                    if holding_amount >= THRESHOLD_LIMIT:
+                        print_string += f"${holding_amount:,.2f} of {holding_ticker} "
+                        print_status = True
+
+        if print_status:
+            return_string += f"{print_string}\n"
+        
+        wallet_rank += 1
+    embed = discord.Embed(title=f"Notable Holders", description=return_string, color=discord.Colour.gold())
+    await interaction.followup.send(embed=embed)
 
 @bot.tree.command(name="help", description="Shows commands for the bot") 
 async def help(interaction: discord.Interaction, command: str = "all"):
